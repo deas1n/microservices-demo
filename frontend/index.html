@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <title>Мікросервісний трекер задач</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 700px; margin: 40px auto; padding: 0 16px; }
+    .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 20px; }
+    input, select, button { padding: 8px 12px; margin-right: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Трекер задач (Мікросервіси)</h1>
+
+  <div class="card">
+    <h3>Нова задача</h3>
+    <input id="titleInput" type="text" placeholder="Назва задачі" />
+    <select id="userSelect"></select>
+    <button onclick="addTask()">Додати</button>
+    <p id="errorMsg" style="color: crimson;"></p>
+  </div>
+
+  <div class="card">
+    <h3>Список задач</h3>
+    <ul id="tasksList"></ul>
+  </div>
+
+  <script>
+    const TASKS_API = "http://localhost:8002";
+    const USERS_API = "http://localhost:8001";
+
+    async function loadUsers() {
+      const res = await fetch(`${USERS_API}/users`);
+      const users = await res.json();
+      const select = document.getElementById("userSelect");
+      select.innerHTML = users.map(u => `<option value="${u.id}">${u.name} (${u.role})</option>`).join("");
+    }
+
+    async function loadTasks() {
+      const res = await fetch(`${TASKS_API}/tasks`);
+      const tasks = await res.json();
+      const list = document.getElementById("tasksList");
+      list.innerHTML = tasks.map(t => `<li><b>${t.title}</b> — виконавець: ${t.assignee}</li>`).join("");
+    }
+
+    async function addTask() {
+      const err = document.getElementById("errorMsg");
+      err.textContent = "";
+      const title = document.getElementById("titleInput").value.trim();
+      const user_id = Number(document.getElementById("userSelect").value);
+
+      if (!title) {
+        err.textContent = "Введіть назву задачі";
+        return;
+      }
+
+      const res = await fetch(`${TASKS_API}/tasks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, user_id })
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        err.textContent = data.detail || "Помилка створення задачі";
+        return;
+      }
+
+      document.getElementById("titleInput").value = "";
+      await loadTasks();
+    }
+
+    loadUsers();
+    loadTasks();
+  </script>
+</body>
+</html>
