@@ -8,4 +8,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app.py .
 
 EXPOSE 8002
-CMD ["uvicorn", "app.py", "--host", "0.0.0.0", "--port", "8002"]
+CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port ${PORT:-8002}"]
